@@ -1,221 +1,369 @@
 <?js
-    var self = this;
-    var isGlobalPage;
+  var self = this;
+  var isGlobalPage;
 
-    docs.forEach(function(doc, i) {
-      var isClassOrConstructor = doc.kind === 'class' && !doc.static;
-?>
+  docs.forEach(function(doc, docIndex) {
+    var docletName = doc.name
+    var docletLongname = doc.longname
+    var isStaticDoclet = doc.static
 
-<?js
+    var isClassOrConstructor = doc.kind === 'class' && !isStaticDoclet;
+
     // we only need to check this once
     if (typeof isGlobalPage === 'undefined') {
-        isGlobalPage = (doc.kind === 'globalobj');
+      isGlobalPage = (doc.kind === 'globalobj');
     }
+
+    if (doc.kind === 'mainpage' || doc.kind === 'package') {
 ?>
-<?js if (doc.kind === 'mainpage' || (doc.kind === 'package')) { ?>
-    <?js= self.partial('mainpage.tmpl', doc) ?>
-<?js } else if (doc.kind === 'source') { ?>
+      <?js= self.partial('mainpage.tmpl', doc) ?>
+<?js
+    } else if (doc.kind === 'source') {
+      // nothing
+    } else {
+      if (!docletLongname || doc.kind !== 'module') {
+?>
+        <h2> <!-- start H2 -->
+<?js
+          var ancestors = doc.ancestors
+          var numberOfAncestors = ancestors ? ancestors.length : 0
 
-<?js } else { ?>
-    <?js if (!doc.longname || doc.kind !== 'module') { ?>
-        <h2><?js if (doc.ancestors && doc.ancestors.length) { ?>
+          if (numberOfAncestors > 0) {
+?>
             <span class="ancestors">
-                <?js=doc.ancestors.join('')?>
+              <?js= ancestors.join('') ?>
             </span>
-        <?js } ?>
-        
-        <span><?js= doc.parsedName ?></span>
-        <?js if (doc.variation) { ?>
-            <sup class="variation"><?js= doc.variation ?></sup>
-        <?js } ?></h2>
+<?js
+          }
+?>
+          <span>
+            <?js= doc.parsedName ?>
+          </span>
+<?js
+          var variation = doc.variaton
+          if (variation) {
+?>
+            <sup class="variation">
+              <?js= variation ?>
+            </sup>
+<?js
+          }
+?>
+        </h2> <!-- end H2 -->
 
-        <?js if(doc.static) { ?>
-            <?js= self.partial('modifiers.tmpl', doc) ?> 
-        <?js } ?>
-        <?js= (typeof doc.classdesc === "string"
-            ? doc.classdesc.replace(/(\{@link [^}]+)&quot;([^\}]+)&quot;([^\}]*\})/g, "$1\"$2\"$3")
-            : doc.classdesc) ?>
-        
-    <?js } ?>
+<?js
+        if(isStaticDoclet) {
+?>
+          <?js= self.partial('modifiers.tmpl', doc) ?>
+<?js
+        }
 
-    <?js= self.partial('amd.tmpl', doc) ?>
+        var docletClassDescription = doc.classdesc
 
-    <?js if ( !isClassOrConstructor ) { ?>
-        <?js if ( doc.description ) { ?>
-            <div class="description"><?js= doc.description ?></div>
-        <?js } ?>
+        var _classDescription = typeof docletClassDescription === "string"
+          ? docletClassDescription.replace(/(\{@link [^}]+)&quot;([^\}]+)&quot;([^\}]*\})/g, "$1\"$2\"$3")
+          : docletClassDescription
+?>
+        <?js= _classDescription ?>
+<?js
+      } // end of inital if else {}
+?>
+      <?js= self.partial('amd.tmpl', doc) ?>
+<?js
+      if (!isClassOrConstructor) {
+
+        var docletDescription = doc.description
+        if (docletDescription) {
+?>
+          <div class="description">
+            <?js= doc.description ?>
+          </div>
+<?js
+        }
+?>
         <?js= self.partial('details.tmpl', doc) ?>
-    <?js } ?>
+<?js
+      } // not isClassOrConstructor
 
-    <?js if (doc.see && doc.see.length) { ?>
+      var docletSeeLinks = doc.see
+      var numberOfSeeLinks = docletSeeLinks ? docletSeeLinks.length : 0
+
+      if (numberOfSeeLinks > 0) {
+?>
         <p>
-            <strong>See also:&nbsp;</strong>
-            <?js doc.see.forEach(function(s, i) { ?>
-                <?js= self.linkto(s) ?>
-                <?js if(i < doc.see.length-1) { ?>
-                    <?js= ", " ?>
-                <?js } ?>
-            <?js }) ?>
+          <strong>See also:&nbsp;</strong>
+<?js
+          docletSeeLinks.forEach(function(seeLink, index) {
+?>
+            <?js= self.linkto(seeLink) ?>
+<?js
+            if(index < docletSeeLinks - 1) {
+?>
+              <?js= ", " ?>
+<?js
+            }
+          })
+?>
         </p>
-    <?js } ?>
+<?js
+      }
 
-    <?js if( doc.augments && doc.augments.length ) { ?>
+      var docletAugments = doc.augments
+      var numberOfAugments = docletAugments ? docletAugments.length : 0
+
+      if(numberOfAugments > 0) {
+?>
         <p class="h3">Extends</p>
         <?js= self.partial('augments.tmpl', doc) ?>
-    <?js } ?>
+<?js
+      }
 
-    <?js if ( isClassOrConstructor ) { ?>
-        <?js if (doc.implements && doc.implements.length) { ?>
-            <p class="h3">Implements</p>
-            <ul>
-                <?js doc.implements.forEach(function( impl ) { ?>
-                <li><?js= self.linkto( impl, self.htmlsafe( impl ) ) ?></li>
-                <?js }); ?>
-            </ul>
-        <?js } ?>
+      if ( isClassOrConstructor ) {
 
-        <?js if (doc.mixes && doc.mixes.length) { ?>
-            <p class="h3">Mixes In</p>
-            <ul>
-                <?js doc.mixes.forEach(function( mix ) { ?>
-                <li><?js= self.linkto( mix, mix ) ?></li>
-                <?js }); ?>
-            </ul>
-        <?js } ?>
+        var docletImplements = doc.implements
+        var numberOfImplements = docletImplements ? docletImplements.length : 0
+
+        if (numberOfImplements > 0) {
+?>
+          <p class="h3">Implements</p>
+          <ul>
+<?js
+            docletImplements.forEach(function(impl) {
+?>
+              <li>
+                <?js= self.linkto(impl, self.htmlsafe(impl)) ?>
+              </li>
+<?js
+            });
+?>
+          </ul>
+<?js
+        }
+
+        var docletMixins = doc.mixes
+        var numberOfMixins = docletMixins ? docletMixins.length : 0
+
+        if (numberOfMixins > 0) {
+?>
+          <p class="h3">Mixes In</p>
+          <ul>
+<?js
+            docletMixins.forEach(function(mix) {
+?>
+              <li>
+                <?js= self.linkto(mix, mix) ?>
+              </li>
+<?js
+            });
+?>
+          </ul>
+<?js
+        }
+?>
 
         <h3>Constructor</h3>
         <?js= self.partial('methods-summary.tmpl', [doc]) ?>
+<?js
+      } else { // end isClassOrConstructor
 
-    <?js } else { ?>
-        <?js if (doc.examples && doc.examples.length) { ?>
-            <h3>Example<?js= doc.examples.length > 1? 's':'' ?></h3>
-            <?js= self.partial('examples.tmpl', doc.examples) ?>
-        <?js } ?>
+        var docletExamples = doc.examples
+        var numberOfExamples = docletExamples ? docletExamples.length : 0
 
-    <?js } ?>
+        if (numberOfExamples > 0) {
+          var examplesHeader = numberOfExamples > 1 ? "Examples" : "Example"
+?>
+          <h3>
+            <?js= examplesHeader ?>
+          </h3>
 
-    <?js if (doc.requires && doc.requires.length) { ?>
+          <?js= self.partial('examples.tmpl', docletExamples) ?>
+<?js
+        }
+      } // end not isClassOrConstructor
+
+      var docletRequires = doc.requires
+      var numberOfRequires = docletRequires ? docletRequires.length : 0
+
+      if (docletRequires > 0) {
+?>
         <h3 class="subsection-title">Requires</h3>
+        <ul>
+<?js
+          docletRequires.forEach(function(_required) {
+?>
+            <li>
+              <?js= self.linkto(_required, _required) ?>
+            </li>
+<?js
+          });
+?>
+        </ul>
+<?js
+      }
 
-        <ul><?js doc.requires.forEach(function(r) { ?>
-            <li><?js= self.linkto(r, r) ?></li>
-        <?js }); ?></ul>
-    <?js } ?>
+      // Namespace Summary Start
+      var namespaces = self.find({kind: 'namespace', memberof: docletLongname});
+      var numberOfNamespaces = namespaces ? namespaces.length : 0
 
-    <!-- Namespace Summary Start-->
-
-    <?js var namespaces = self.find({kind: 'namespace', memberof: doc.longname});
-    if (!isGlobalPage && namespaces && namespaces.length) { ?>
+      if (!isGlobalPage && numberOfNamespaces > 0) {
+?>
         <h3>Child Namespaces</h3>
         <?js= self.partial('summary.tmpl', namespaces) ?>
-    <?js } ?>
+<?js
+      }
 
-    <?js 
-      var classes = self.find({kind: 'class', memberof: doc.longname});
-      if (!isGlobalPage && classes && classes.length) { ?>
+
+      var classes = self.find({kind: 'class', memberof: docletLongname});
+      var numberOfClasses = classes ? classes.length : 0
+
+      if (!isGlobalPage && numberOfClasses > 0) {
+?>
         <h3>Classes</h3>
         <?js= self.partial('summary.tmpl', classes) ?>
-    <?js } ?>
+<?js
+      }
 
-    <?js 
-      var events = self.find({kind: 'event', memberof: doc.longname, scope: "static"});
-      if (!isGlobalPage && events && events.length) { ?>
+      var staticEvents = self.find({kind: 'event', memberof: docletLongname, scope: "static"});
+      var numberOfStaticEvents = staticEvents ? staticEvents.length : 0
+
+      if (!isGlobalPage && numberOfStaticEvents > 0) {
+?>
         <h3>Events</h3>
-        <?js= self.partial('summary.tmpl', events) ?>
-    <?js } ?>
+        <?js= self.partial('summary.tmpl', staticEvents) ?>
+<?js
+      }
 
-    <?js 
-      var interfaces = self.find({kind: 'interface', memberof: doc.longname});
-      if (!isGlobalPage && interfaces && interfaces.length) { ?>
+      var interfaces = self.find({kind: 'interface', memberof: docletLongname});
+      var numberOfInterfaces = interfaces ? interfaces.length : 0
+
+      if (!isGlobalPage && numberOfInterfaces > 0) {
+?>
         <h3>Interfaces</h3>
         <?js= self.partial('summary.tmpl', interfaces) ?>
-    <?js } ?>
+<?js
+      }
 
-    <?js var mixins = self.find({kind: 'mixin', memberof: doc.longname});
-    if (!isGlobalPage && mixins && mixins.length) { ?>
+      var mixins = self.find({kind: 'mixin', memberof: docletLongname});
+      var numberOfMixins = mixins ? mixins.length : 0
+
+      if (!isGlobalPage && numberOfMixins > 0) {
+?>
         <h3>Mixins</h3>
-        <dl><?js mixins.forEach(function(m) { ?>
-            <dt><?js= self.linkto(m.longname, m.name) ?></dt>
-        <?js }); ?></dl>
-    <?js } ?>
+        <dl>
+<?js
+          mixins.forEach(function(mix) { ?>
+            <dt>
+              <?js= self.linkto(mix.longname, mix.name) ?>
+            </dt>
+<?js
+          });
+?>
+        </dl>
+<?js
+      } // Namespace Summary End
 
-    <!-- Namespace Summary End -->
+      // Class Summary Start
 
-    <!-- Class Summary Start -->
+      // Members composition
+      var members = [].concat(self.find({kind: 'member', memberof: isGlobalPage ? {isUndefined: true} : docletLongname }))
+      var numberOfMembers = members ? members.length : 0
 
-    <!-- Members composition -->
-    <?js var members = [] ?>
-
-    <?js members = members.concat( self.find({
-        kind: 'member', 
-        memberof: isGlobalPage ? {isUndefined: true} : doc.longname
-    }) ) ?>
-
-    <!-- Methods composition -->
-    <?js var methods = self.find({kind: 'function', memberof: isGlobalPage ? {isUndefined: true} : doc.longname}); ?>
-
-    <?js if (members && members.length) { ?>
+      if (numberOfMembers > 0) {
+?>
         <h3>Members</h3>
-        <?js= self.partial('members-summary.tmpl', members) ?>
-    <?js } ?>
+          <?js= self.partial('members-summary.tmpl', members) ?>
+<?js
+      }
 
-    <?js if (methods && methods.length) { ?>
+      // Methods composition
+      var methods = self.find({kind: 'function', memberof: isGlobalPage ? {isUndefined: true} : docletLongname});
+      var numberOfMethods = methods ? methods.length : 0
+
+      if (numberOfMethods > 0) {
+?>
         <h3>Methods</h3>
         <?js= self.partial('methods-summary.tmpl', methods) ?>
-    <?js } ?>
+<?js
+      }
 
-    <?js var events = self.find({kind: 'event', memberof: doc.longname, scope: "instance"}); 
-        if (!isGlobalPage && events && events.length) { ?>
+      var instanceEvents = self.find({kind: 'event', memberof: docletLongname, scope: "instance"});
+      var numberOfInstanceEvents = instanceEvents ? instanceEvents.length : 0
+
+      if (!isGlobalPage && numberOfInstanceEvents > 0) {
+?>
         <h3>Events</h3>
-        <?js= self.partial('events-summary.tmpl', events) ?>
-    <?js } ?>
+        <?js= self.partial('events-summary.tmpl', instanceEvents) ?>
+<?js
+      } // Class Summary End
 
-    <!-- Class Summary End -->
+      // Details Start
 
-    <!-- Details Start -->
-
-    <?js if (isClassOrConstructor) { ?>
+      if (isClassOrConstructor) {
+?>
         <p class="h3">Constructor Details</p>
         <?js= self.partial('method-details.tmpl', doc) ?>
-    <?js } ?>
+<?js
+      }
 
-    <?js if (members && members.length) { ?>
+      if (numberOfMembers > 0) {
+?>
         <p class="h3">Members Details</p>
-        <?js members.forEach(function(p) { ?>
-            <?js= self.partial('member-details.tmpl', p) ?>
-        <?js }); ?>
-    <?js } ?>
+<?js
+        members.forEach(function(member) {
+?>
+          <?js= self.partial('member-details.tmpl', member) ?>
+<?js
+        });
+      }
 
-    <?js if (methods && methods.length) { ?>
+      if (numberOfMethods > 0) {
+?>
         <p class="h3">Methods Details</p>
-        <?js methods.forEach(function(m) { ?>
-            <?js= self.partial('method-details.tmpl', m) ?>
-        <?js }); ?>
-    <?js } ?>
+<?js
+        methods.forEach(function(method) {
+?>
+          <?js= self.partial('method-details.tmpl', method) ?>
+<?js
+        });
+      }
 
-    <?js var events = self.find({kind: 'event', memberof: doc.longname});
-    if (events && events.length) { ?>
+      var events = self.find({kind: 'event', memberof: docletLongname});
+      var numberOfEvents = events ? events.length : 0
+
+      if (numberOfEvents > 0) {
+?>
         <p class="h3">Events Details</p>
-        <?js events.forEach(function(e) { ?>
-            <?js= self.partial('method-details.tmpl', e) ?>
-        <?js }); ?>
-    <?js } ?>
+<?js
+        events.forEach(function(event) {
+?>
+          <?js= self.partial('method-details.tmpl', event) ?>
+<?js
+        });
+      }
 
-    <?js var typedefs = self.find({kind: 'typedef', memberof: isGlobalPage ? {isUndefined: true} : doc.longname});
-    if (typedefs && typedefs.length) { ?>
+      var typedefs = self.find({kind: 'typedef', memberof: isGlobalPage ? {isUndefined: true} : docletLongname});
+      var numberOfTypedefs = typedefs ? typedefs.length : 0
+
+      if (numberOfTypedefs > 0) {
+?>
         <h3>Type Definitions</h3>
+<?js
+        typedefs.forEach(function(definition) {
+          if (definition.signature) {
+?>
+            <?js= self.partial('method-details.tmpl', definition) ?>
+<?js
+          } else {
+?>
+            <?js= self.partial('member-details.tmpl', definition) ?>
+<?js
+          }
+        });
+      }
 
-        <?js typedefs.forEach(function(e) {
-            if (e.signature) { ?>
-                <?js= self.partial('method-details.tmpl', e) ?>
-            <?js } else { ?>
-                <?js= self.partial('member-details.tmpl', e) ?>
-            <?js }
-        }); ?>
-    <?js } ?>
+      // Details End
 
-    <!-- Details End -->
+    }
 
-<?js } ?>
-
-<?js }); ?>
+  });
+?>

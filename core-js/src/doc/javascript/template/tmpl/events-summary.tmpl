@@ -1,64 +1,90 @@
 <?js
-var events = obj;
-var self = this;
+  var events = obj;
+  var self = this;
 ?>
 
 <table class="api-ref-table">
-    <thead>
+  <thead>
     <tr>
-        <th scope="col">Name</th>
-        <th scope="col">Description</th>
+      <th scope="col">Name</th>
+      <th scope="col">Description</th>
     </tr>
-    </thead>
+  </thead>
 
-    <tbody>
+  <tbody>
 <?js
-    var self = this;
-    if(events) {
-        events.forEach(function(event) {
-            if(!event) { return; }
-            var name = "event:" + encodeURI(event.name);
-            var params = [];
-            var duplicate;
-            if(event.params && event.params.length) {
-                event.signature = "("
-                event.params.forEach(function(p, i) {
-                    duplicate = false;
-                    for(var i = 0; i < params.length; i++) {
-                        if(p.name.indexOf(params[i]) > -1) {
-                            duplicate = true;
-                        }
-                    }
-                    if(!duplicate) {
-                        if(params.length > 0) {
-                            event.signature += ", " + p.name;
-                        } else {
-                            event.signature += p.name;
-                        }
-                        params.push(p.name);
-                    }
-                });
-                event.signature += ")";
+  if(events) {
+    events.forEach(function(event) {
+      if(!event) {
+        return;
+      }
+
+      var name = "event:" + encodeURI(event.name);
+      var params = [];
+
+      var eventParams = event.params
+      var numberOfEventParams = eventParams ? eventParams.length : 0
+
+      if (numberOfEventParams > 0) {
+        event.signature = "("
+        eventParams.forEach(function(param, index) {
+          if (!param) {
+            return;
+          }
+
+          var duplicate = false;
+          var paramName = param.name
+
+          for(var i = 0; i < params.length; i++) {
+            if(paramName.indexOf(params[i]) > -1) {
+              duplicate = true;
+            }
+          }
+
+          if(!duplicate) {
+            if(params.length > 0) {
+              event.signature += ", " + paramName
             } else {
-                event.signature = "";
-            } ?>
-    <tr>
-        <td>
-            <a href='#<?js= name ?>'> <?js= event.parsedName.replace(/(parameterName|parameter):fireChange/, "<em>$1</em>:fireChange") + event.signature ?> </a>
-            <?js if (event.returns && event.returns.length) { ?>
-            <?js event.returns.forEach(function(r, i) { ?>
-            <?js= self.partial('type.tmpl', r.type.names) ?>
-            <?js if (i < event.returns.length-1) { ?>|<?js } ?>
-            <?js });
-                  } ?>
-            <?js= self.partial('modifiers.tmpl', event) ?>
-        </td>
-        <td> <?js= event.summary ?> </td>
-    </tr>
-<?js
-        });
-    }
-?>
-    </tbody>
-</table>
+              event.signature += paramName;
+            }
 
+            params.push(paramName);
+          }
+        });
+
+        event.signature += ")";
+      } else {
+        event.signature = "";
+      }
+?>
+      <tr>
+        <td>
+          <a href='#<?js= name ?>'>
+            <?js= event.parsedName.replace(/(parameterName|parameter):fireChange/, "<em>$1</em>:fireChange") + event.signature ?>
+          </a>
+<?js
+          var eventReturns = eventReturns
+          var numberOfEventReturns = eventReturns ? eventReturns.length : 0
+
+          if (numberOfEventReturns) {
+            eventReturns.forEach(function(_return, index) {
+?>
+              <?js= self.partial('type.tmpl', _return.type.names) ?>
+<?js
+              if (index < numberOfEventReturns - 1) {
+                ?>|<?js
+              }
+            });
+          }
+?>
+          <?js= self.partial('modifiers.tmpl', event) ?>
+        </td>
+
+        <td> <?js= event.summary ?> </td>
+      </tr>
+<?js
+    });
+  }
+?>
+  </tbody>
+</table>
