@@ -18,6 +18,7 @@
     <karma.legacy.file.config>karma.ci.conf.legacy.js</karma.legacy.file.config>
 
     <docjs.config.file>jsdoc-cdf.json</docjs.config.file>
+    <mindtouch.upload.version><!-- version of Mindtouch link. 7.0, 8.1, ... --></mindtouch.upload.version>
     <docjs.config.github.branch>master</docjs.config.github.branch>
     <docjs.config.template.directory>${project.basedir}/src/doc/javascript/template</docjs.config.template.directory>
   </properties>
