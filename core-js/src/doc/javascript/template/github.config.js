@@ -61,80 +61,41 @@ module.exports = function() {
       }
 
       return url.replace(/\/$/, '');
+    },
+
+    getSourceLink: function(doclet) {
+      var meta = doclet.meta;
+      if (meta == null) {
+        return meta;
+      }
+
+      var filename = meta.filename;
+      var shortPath = meta.shortpath;
+      var lineNumber = meta.lineno;
+
+      var repoName = this.name;
+      var repoVersion = this.branch;
+
+      var isJavascriptFile = shortPath && shortPath.indexOf('.js') !== -1;
+      var type = isJavascriptFile ? 'tree' : 'blob';
+
+      var path = _getGitSourcePath(doclet, repoName);
+      var linkBase = this.url + '/' + type + '/' + repoVersion + '/' + path;
+
+      var url = linkBase + '/' + filename + (lineNumber ? '#L' + lineNumber : '');
+      var linkText = shortPath + (lineNumber ? ', line ' + lineNumber : '');
+
+      return '<a href="' + url + '" target="_blank">' + linkText + '</a>';
     }
   }
 };
 
-//
-// module.exports = function() {
-//   var githubConfig = env.opts.githubConfig;
-//   if (githubConfig == null) {
-//     githubConfig = env.opts.githubConfig = {};
-//   }
-//
-//   var BASE_URL = "https://github.com";
-//   var DEFAULT_COMPANY = "pentaho";
-//   var DEFAULT_BRANCH = "master";
-//
-//   var getName = function() {
-//     var name = githubConfig.name;
-//     if (name != null) {
-//       return name;
-//     }
-//
-//     var url = githubConfig.url;
-//     if (url != null) {
-//       url = url.replace(/(^\/|\/$)/, '');
-//
-//       var lastSlash = url.lastIndexOf('/');
-//
-//       name = githubConfig.name = lastSlash !== -1 ? url.substring(lastSlash, url.length) : url;
-//     }
-//
-//     return name;
-//   };
-//
-//   var getCompany = function() {
-//     var company = githubConfig.company;
-//     if (company == null) {
-//       company = githubConfig.company = DEFAULT_COMPANY;
-//     }
-//
-//     return company;
-//   };
-//
-//   var getBranch = function() {
-//     var branch = githubConfig.branch;
-//     if (branch == null) {
-//       branch = githubConfig.branch = DEFAULT_BRANCH;
-//     }
-//
-//     return branch;
-//   };
-//
-//   var getUrl = function() {
-//     var url = githubConfig.url;
-//     if (url == null) {
-//       url = githubConfig.url = BASE_URL + "/" + getCompany() + "/" + getName();
-//     }
-//
-//     return url.replace(/\/$/, '');
-//   };
-//
-//   return {
-//     /**
-//      *
-//      */
-//     __config: githubConfig,
-//
-//     name: getName(),
-//
-//     company: getCompany(),
-//
-//     branch: getBranch(),
-//
-//     url: getUrl()
-//
-//   }
-// };
+function _getGitSourcePath(doclet, gitRepoName) {
+  var path = doclet.meta.path.replace(/\\/g,"/");
+  var pathLength = path.length;
 
+  var nameLength = gitRepoName ? gitRepoName.length : 0;
+  var nameIndexOf = gitRepoName ? path.indexOf(gitRepoName) + 1 : 0;
+
+  return path.substring(nameIndexOf + nameLength, pathLength);
+}
